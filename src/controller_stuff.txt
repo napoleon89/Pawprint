@@ -1,0 +1,60 @@
+
+		f32 deadzone = 0.3f;
+		
+		Vec2 getRightAxis() {
+			Vec2 result = Vec2();
+			s16 v_axis = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY);
+			s16 h_axis = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX);
+			f32 y = -(f32)v_axis / 32768.0f;
+			f32 x = (f32)h_axis / 32768.0f;
+			if(y >= deadzone || y <= -deadzone) result.y = y;
+			if(x >= deadzone || x <= -deadzone) result.x = x;
+			
+			return result;
+		}
+		
+		Vec2 getLeftAxis() {
+			Vec2 result = Vec2();
+			s16 v_axis = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTY);
+			s16 h_axis = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX);
+			f32 y = -(f32)v_axis / 32768.0f;
+			f32 x = (f32)h_axis / 32768.0f;
+			if(y >= deadzone || y <= -deadzone) result.y = y;
+			if(x >= deadzone || x <= -deadzone) result.x = x;
+			
+			Vec2 keyboard_result = Vec2();
+			if(isKeyDown(Button::LineRight)) keyboard_result.x += 1.0f;
+			if(isKeyDown(Button::LineLeft)) keyboard_result.x -= 1.0f;
+			if(isKeyDown(Button::LineUp)) keyboard_result.y += 1.0f;
+			if(isKeyDown(Button::LineDown)) keyboard_result.y -= 1.0f;
+			if((keyboard_result.x != 0.0f || keyboard_result.y != 0.0f) || (result.x != 0.0f || result.y != 0.0f))
+				return Vec2::normalize(keyboard_result + result);
+			else return result;
+		}
+		
+		bool getFire() {
+			// s16 axis = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+			// f32 a = axis / 32768.0f;
+			return SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_X) || isMouseButtonDown(0);
+			// return (bool)SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_X);
+		}
+		
+		bool getJump() {
+			return ((bool)SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) || (bool)SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_A)) || isKeyPressedOnce(Button::Jump); 
+		}
+		
+		bool getDive() {
+			return ((bool)SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_B)) || isKeyDown(Button::Dive);
+		}
+		
+		
+		// void connectController(Platform *platform) {
+		// 	for(u32 i = 0; i < platform->getControllerCount(); ++i) {
+		// 		if(SDL_IsGameController(i)) {
+		// 			controller = SDL_GameControllerOpen(i);
+		// 			if(controller) {
+		// 				break;
+		// 			}
+		// 		}
+		// 	}
+		// }

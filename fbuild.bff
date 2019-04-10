@@ -1,0 +1,130 @@
+.VSBinPath = 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.16.27023\bin\Hostx64\x64'
+
+.Compiler = '$VSBinPath$\cl.exe'
+.Librarian = '$VSBinPath$\lib.exe'
+.Linker = '$VSBinPath$\link.exe'
+
+.CompilerOptions    = '"%1"'
+                    + ' /Fo"%2"'
+                    + ' /c'
+                    + ' -nologo'
+                    + ' -Isrc'
+                    + ' -Ideps/include'
+                    + ' -Itools/deps/include'
+                    + ' -Itools/'
+                    + ' -EHsc'
+                    + ' -W4 -wd4312 -wd4806 -wd4701 -wd4505 -wd4201 -EHsc -wd4100 -wd4127 -wd4189 -wd4244 -wd4005'
+                    + ' -FC'
+                    + ' -WX'
+                    + ' -Oi'
+                    + ' -Od'
+                    + ' -Z7'
+                    + ' -MTd'
+                    + ' -D_CRT_SECURE_NO_WARNINGS'
+                    + ' -D_DEBUG -D_ITERATOR_DEBUG_LEVEL=2'
+
+.LinkerOptions      = '/OUT:"%2"'
+                    + ' "%1"'
+                    + ' /NOLOGO'
+                    + ' -LIBPATH:deps/lib/x64/windows'
+                    + ' -LIBPATH:tools/deps/lib/x64/windows'
+                    + ' -opt:ref'
+                    + ' msvcrtd.lib'
+
+.LibrarianOptions   = '/NODEFAULTLIB -NOLOGO /OUT:%2 %1'
+
+CopyDir('tools-deps')
+{
+    .SourcePaths        = {'tools/deps/bin/x64/'}
+    .SourcePathsPattern = '*.dll'
+    .Dest               = 'tools/build'
+}
+
+ObjectList('reflect-lib')
+{
+    .CompilerInputPath  = 'tools\reflect'
+    .CompilerOutputPath = 'temp\tools\reflect\obj'
+}
+
+Executable('reflect')
+{
+    .Libraries              = {'reflect-lib'}
+    .LinkerOutput           = 'tools\build\reflect.exe'
+    .PreBuildDependencies   = {'tools-deps'}
+    .LinkerOptions          + ' libclang.lib'
+                            + ' -SUBSYSTEM:CONSOLE '
+}
+
+ObjectList( 'imgui-lib' )
+{
+    .CompilerInputPath  = 'src\imgui'
+    .CompilerOutputPath = 'temp\imgui\obj'
+    .CompilerOptions    + ' -Fe:imgui.dll -LD -DIMGUI_EXPORT'
+}
+
+DLL( 'imgui' )
+{
+    .Libraries      = {'imgui-lib'}
+    .LinkerOutput   = 'build\imgui.dll'
+    .LinkerOptions  + ' -DLL'
+}
+
+Library( 'core' )
+{
+    .CompilerInputPath  = 'src\core\'
+    .CompilerOutputPath = 'temp\core\obj\'
+    .LibrarianOutput    = 'temp\core\core.lib'
+}
+
+Library( 'engine' )
+{
+    .CompilerInputPath          = 'src\engine\'
+    .CompilerOutputPath         = 'temp\engine\obj\'
+    .CompilerInputExcludedFiles = 'src\engine\enum.cpp'
+    .LibrarianOutput            = 'temp\engine\engine.lib'
+}
+
+ObjectList( 'main-lib' )
+{
+    .CompilerInputPath  = 'src\main\'
+    .CompilerOutputPath = 'temp\main\obj'
+}
+
+Executable( 'main' )
+{
+    .Libraries      = {'core', 'engine', 'imgui', 'main-lib'}
+    .LinkerOutput   = 'build\tul.exe'
+    .LinkerOptions  + ' libcmt.lib'
+                    + ' dxgi.lib'
+                    + ' d3d11.lib'
+                    + ' user32.lib'
+                    + ' sdl2main.lib'
+                    + ' sdl2.lib'
+                    + ' soloud.lib'
+                    + ' assimp-vc140-mt.lib'
+                    + ' -SUBSYSTEM:CONSOLE -DEBUG'
+}
+
+ObjectList( 'game-lib' )
+{
+    .CompilerInputPath  = 'src\game\'
+    .CompilerOutputPath = 'temp\game\obj'
+    .CompilerOptions    + ' -LDd -DPP_EDITOR'
+}
+
+DLL( 'game' )
+{
+    .Libraries      = {'game-lib', 'engine'}
+    .LinkerOutput   = 'build\game.dll'
+    .LinkerOptions  + ' -DLL -DEBUG /PDBALTPATH:game_temp.pdb'
+                    + ' BulletCollision_Debug.lib'
+                    + ' BulletDynamics_Debug.lib'
+                    + ' LinearMath_Debug.lib'
+                    + ' build\imgui.lib'
+                    + ' /EXPORT:gameInit'
+                    + ' /EXPORT:gameUpdate'
+                    + ' /EXPORT:gameRender'
+                    + ' /EXPORT:gameResize'
+}
+
+Alias( 'all' ) {.Targets = {'game', 'main'}}

@@ -1,0 +1,5 @@
+build/*
+temp/*
+*.sublime-workspace
+.vscode
+fbuild.fdb

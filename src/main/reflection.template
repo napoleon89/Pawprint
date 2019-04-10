@@ -1,0 +1,21 @@
+template<>
+Class *Reflection::getStruct<$type$>() {
+	static Class result;
+	result.name = "$type$";
+	result.fields = new Field[$field_count$];
+	result.field_count = $field_count$;
+	result.size = sizeof($type$);
+
+	$fields:{field| 
+result.fields[$i0$].type = getType<$field.type_id$>();
+result.fields[$i0$].name = "$field.name$";
+result.fields[$i0$].offset = offsetof($type$, $field.name$);
+	}$
+
+	return &result;
+}
+
+template<>
+const Type *getType<$type$>() { 
+	return (const Type *)getStruct<$type$>();
+}

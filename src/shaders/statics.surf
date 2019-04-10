@@ -1,0 +1,33 @@
+cbuffer PerObject : register(b1) {
+	float4x4 model;
+	float4 color;
+	float4 metallic_roughness;
+};
+
+struct VS_OUTPUT {
+	float4 pos : SV_POSITION;
+	float3 world_pos : POSITION0;
+	float3 normal : NORMAL;
+	float3 color : COLOR;
+};
+
+VS_OUTPUT  vs_main(float3 in_pos : POSITION, float3 in_normal : NORMAL, float3 in_color : COLOR) {
+	VS_OUTPUT output;
+	float4 world_pos = mul(float4(in_pos.x, in_pos.y, in_pos.z, 1.0f), model);
+	float4 view_pos = mul(world_pos, view);
+	float4 clip_pos = mul(view_pos, projection);
+	output.pos = clip_pos;
+	output.normal = normalize(mul(float4(in_normal.x, in_normal.y, in_normal.z, 0.0f), model).xyz);
+	output.world_pos = world_pos.xyz;
+	output.color = in_color;
+
+	return output;
+}
+
+SurfaceShaderOutput surfaceFunc(VS_OUTPUT input) {
+	SurfaceShaderOutput output;
+	output.albedo = color.rgb * input.color;
+	output.roughness = metallic_roughness.y * 0.9f + 0.1f;
+	output.metallic = metallic_roughness.x;
+	return output;
+}

@@ -515,19 +515,19 @@ void GameState::renderGeometry(PlatformWindow *window, RenderContext *render_con
 	}
 	if(can_override_shader)
 		render_context->bindShader(&assets->shaders.skinned);
-	renderSkinnedMesh(render_context, &assets->skel_dude, Vec3(10.0f, 0.0f, 0.0f), Vec3(0.075f), Vec4(1.0f), 1.0f, 0.0f);
+	renderSkinnedMesh(render_context, &assets->skel_dude, Vec3(10.0f, 0.0f, 0.0f), Vec3(0.025f), Vec4(1.0f), 1.0f, 0.0f);
 }
 
 void GameState::render(PlatformWindow *window, RenderContext *render_context, InputManager *input, Assets *assets, Platform *platform,  f32 delta) {
-	for(u32 i = 0; i < assets->skel_dude.skeleton.num_joints; i++) {
-		const Joint &joint = assets->skel_dude.skeleton.joints[i];
-		Vec3 position = Mat4::extractTranslation(joint.world_mat);
-		if(joint.parent_index > -1) {
-			const Joint &parent_joint = assets->skel_dude.skeleton.joints[joint.parent_index];
-			Vec3 parent_position = Mat4::extractTranslation(parent_joint.world_mat) *  Vec3(0.075f) + Vec3(10.0f, 0.0f, 0.0f);
-			DebugRenderQueue::addLine(parent_position, position *  Vec3(0.075f) + Vec3(10.0f, 0.0f, 0.0f), Vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.1f);
-		}
-	}
+	// for(u32 i = 0; i < assets->skel_dude.skeleton.num_joints; i++) {
+	// 	const Joint &joint = assets->skel_dude.skeleton.joints[i];
+	// 	Vec3 position = Mat4::extractTranslation(joint.world_mat);
+	// 	if(joint.parent_index > -1) {
+	// 		const Joint &parent_joint = assets->skel_dude.skeleton.joints[joint.parent_index];
+	// 		Vec3 parent_position = Mat4::extractTranslation(parent_joint.world_mat) *  Vec3(0.075f) + Vec3(10.0f, 0.0f, 0.0f);
+	// 		DebugRenderQueue::addLine(parent_position, position *  Vec3(0.075f) + Vec3(10.0f, 0.0f, 0.0f), Vec4(0.0f, 1.0f, 0.0f, 1.0f), 0.1f);
+	// 	}
+	// }
 	if(input->isKeyDownOnce(Key::F5)) generateMap();
 	pn_prepass.bindForWriting(platform, render_context);
 	pn_prepass.clear(render_context, Vec4(0.0f, 0.0f, 0.0f, 0.0f));

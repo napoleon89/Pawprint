@@ -191,6 +191,7 @@ int main(int arg_count, char *args[]) {
 	game_assets->shaders.statics = loadShaderFromFile(&platform, &render_context, "statics");
 	game_assets->shaders.editor = loadShaderFromFile(&platform, &render_context, "editor");
 	game_assets->shaders.skinned = loadShaderFromFile(&platform, &render_context, "skinned");
+	
 
 	for(u32 i = 0; i < shader_db.shader_keys.count; i++) {
 		const ShaderDB::ShaderPassKey &key = shader_db.shader_keys.getRefConst(i);
@@ -210,7 +211,7 @@ int main(int arg_count, char *args[]) {
 	game_assets->irr_map = loadTextureFromFile(&platform, "skyboxes/apt_ibl", &render_context, "hdr", RenderContext::Format::Vec4, 4);
 	
 	ImGui::CreateContext();
-	ImGuiImpl::init(&platform, &window, &game_assets->shaders.editor);
+	ImGuiImpl::init(&platform, &window, &game_assets->shaders.imgui);
 	
 	ImGuiIO& io = ImGui::GetIO();
 	ImGuiStyle &style = ImGui::GetStyle();

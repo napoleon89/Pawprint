@@ -150,7 +150,7 @@ int main(int arg_count, char *args[]) {
 	RenderContext render_context;
 	render_context.init(window_width, window_height, refresh_rate, &window);
 
-	AudioEngine audio_engine;
+	AudioEngine audio_engine = {};
 	audio_engine.init();
 	
 	Timer frame_timer = Timer(&platform);
@@ -233,7 +233,7 @@ int main(int arg_count, char *args[]) {
 	}
 	// game_assets->skel_dude = loadSkeletonFromFile(&platform, "data/meshes/SK_Mannequin.fbx");
 	game_assets->skel_dude = loadSkeletalMeshFromFile(&platform, &render_context, "data/meshes/dude.fbx");
-	game_assets->walking_anim = loadClipFromFile(&platform, &game_assets->skel_dude.skeleton, "data/anims/standard_run.fbx");
+	game_assets->walking_anim = loadClipFromFile(&platform, &game_assets->skel_dude.skeleton, "data/anims/walking.fbx");
 	game_assets->turning_anim = loadClipFromFile(&platform, &game_assets->skel_dude.skeleton, "data/anims/right_turn_90.fbx");
 	// loadSkeletonFromFile(&platform, "data/anims/ThirdPersonWalk.fbx");
 

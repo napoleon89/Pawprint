@@ -137,6 +137,7 @@ struct GameState {
 	Vec3 draw_position = Vec3(-15.0f, 0.0f, 0.0f);
 	Vec3 velocity;
 	AnimationSequence char_sequence;
+	Vec3 npc_position;
 	
 	void init(Platform *platform, PlatformWindow *window, RenderContext *render_context, Assets *assets, AudioEngine *audio);
 	void onResize(InputManager *input, f32 delta, Platform *platform, PlatformWindow *window, Assets *assets, RenderContext *render_context);

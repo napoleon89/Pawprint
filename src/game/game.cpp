@@ -176,6 +176,8 @@ void GameState::init(Platform *platform, PlatformWindow *window, RenderContext *
 	camera.yaw = 90.0f;
 	camera.beginFrame(platform, window);
 
+	npc_position = Vec3(10.0f, 0.0f, 0.0f);
+
 	f32 light_value = 300.0f;
 	lights[0] = {
 		Vec3(-10.0f,  10.0f, -10.0f),
@@ -424,7 +426,7 @@ void GameState::update(InputManager *input, f32 delta, Platform *platform, Platf
 	camera.beginFrame(platform, window);
 	// Vec2i lock_mouse_pos = Vec2i(camera.window_dimensions.x / 2, camera.window_dimensions.y / 2);
 	// Vec2i mouse_delta = input->getMousePosition() - lock_mouse_pos;
-	
+	npc_position.z -= delta * 3.0f;
 	camera.updatecameraLook(platform, input, delta);
 	f32 move_speed = 1.0f;
 	f32 max_jump_height = 5.0f;
@@ -515,7 +517,7 @@ void GameState::renderGeometry(PlatformWindow *window, RenderContext *render_con
 	}
 	if(can_override_shader)
 		render_context->bindShader(&assets->shaders.skinned);
-	renderSkinnedMesh(render_context, &assets->skel_dude, Vec3(10.0f, 0.0f, 0.0f), Vec3(0.025f), Vec4(1.0f), 1.0f, 0.0f);
+	renderSkinnedMesh(render_context, &assets->skel_dude, npc_position, Vec3(0.025f), Vec4(1.0f), 1.0f, 0.0f);
 }
 
 void GameState::render(PlatformWindow *window, RenderContext *render_context, InputManager *input, Assets *assets, Platform *platform,  f32 delta) {

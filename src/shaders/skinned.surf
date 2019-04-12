@@ -17,12 +17,15 @@ VS_OUTPUT  vs_main(float3 in_pos : POSITION, float3 in_normal : NORMAL, float2 i
 	VS_OUTPUT output;
 	
 	float4 total_local_pos = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 total_local_normal = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	for(int i = 0; i < 4; i++) {
 		if(in_joint_ids[i] > -1) {
 			float4x4 joint_transform = skining_matrices[in_joint_ids[i]];
 			float4 pose_pos = mul(float4(in_pos, 1.0f), joint_transform);
+			float4 pose_normal = mul(float4(in_normal, 0.0f), joint_transform);
 			total_local_pos += pose_pos * in_weights[i];
+			total_local_normal += pose_normal * in_weights[i];
 		}
 	}
 	total_local_pos.w = 1.0f;
@@ -31,7 +34,7 @@ VS_OUTPUT  vs_main(float3 in_pos : POSITION, float3 in_normal : NORMAL, float2 i
 	float4 view_pos = mul(world_pos, view);
 	float4 clip_pos = mul(view_pos, projection);
 	output.pos = clip_pos;
-	output.normal = normalize(mul(float4(in_normal.x, in_normal.y, in_normal.z, 0.0f), model).xyz);
+	output.normal = normalize(mul(float4(total_local_normal.x, total_local_normal.y, total_local_normal.z, 0.0f), model).xyz);
 	output.world_pos = world_pos.xyz;
 	output.uv = in_uv;
 	output.ids = float4(in_joint_ids.x, in_joint_ids.y, in_joint_ids.z, in_joint_ids.w);

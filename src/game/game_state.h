@@ -85,7 +85,7 @@ struct PositionNormalPrePass {
 	void clear(RenderContext *render_context, Vec4 color);
 };
 
-#define CHUNK_SIZE 32
+#define CHUNK_SIZE 64
 
 struct GameState {
 	f32 timer;
@@ -118,6 +118,7 @@ struct GameState {
 	// DepthStencilTexture hdr_depth_texture = {};
 	MeshWrapper test_sphere_mesh;
 	MeshWrapper test_cube_mesh;
+	MeshWrapper terrain_mesh;
 	PositionNormalPrePass pn_prepass;
 	f32 exposure;
 	Light lights[4];
@@ -129,7 +130,7 @@ struct GameState {
 	RenderTexture blur_render_texture;
 	RenderTexture final_composite_texture;
 	BlurConstants blur_constants_data;
-	StaticMeshData terrain_mesh;
+	// StaticMeshData terrain_mesh;
 	StaticMeshReference *static_mesh_references;
 	u32 static_mesh_reference_count;
 	btCollisionWorld *collision_world;

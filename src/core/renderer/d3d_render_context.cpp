@@ -297,8 +297,8 @@ void RenderContext::bindIndexBuffer(VertexBuffer *vb, Format format) {
 }
 
 u32 RenderContext::topologies[(u32)RenderContext::Topology::MAX] = {
+	D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
 	D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP,
-	D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
 };
 
 void RenderContext::sendDraw(Topology topology, u32 num_vertices) {

@@ -92,8 +92,8 @@ struct RenderContext {
 	};
 	
 	enum class Topology {
-		TriangleStrip,
 		TriangleList,
+		TriangleStrip,
 		MAX
 	};
 	

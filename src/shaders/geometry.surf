@@ -28,9 +28,9 @@ VS_OUTPUT  vs_main(float3 in_pos : POSITION, float3 in_normal : NORMAL, float2 i
 
 SurfaceShaderOutput surfaceFunc(VS_OUTPUT input) {
 	SurfaceShaderOutput output;
-	float3 x_color = main_texture.Sample(wrap_sampler, input.world_pos.zy / 16).rgb;
-	float3 y_color = main_texture.Sample(wrap_sampler, input.world_pos.xz / 16).rgb;
-	float3 z_color = main_texture.Sample(wrap_sampler, input.world_pos.xy / 16).rgb;
+	float3 x_color = main_texture.Sample(wrap_sampler, input.world_pos.zy / 8).rgb;
+	float3 y_color = main_texture.Sample(wrap_sampler, input.world_pos.xz / 8).rgb;
+	float3 z_color = main_texture.Sample(wrap_sampler, input.world_pos.xy / 8).rgb;
 	float3 blend_weights = input.normal.rgb;
 	blend_weights = blend_weights / (blend_weights.x + blend_weights.y + blend_weights.z);
 	// output.albedo = color.rgb * main_texture.Sample(sampler0, input.uv).rgb;

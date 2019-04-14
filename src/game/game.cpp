@@ -16,6 +16,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <BulletDynamics/Character/btKinematicCharacterController.h>
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
+#include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 #include <game/game_state.h>
 #include <engine/debug_renderer.h>
 #include <game/FastNoise.h>
@@ -173,6 +174,10 @@ internal_func void generateMap() {
 	}
 }
 
+internal_func void generateChunk(Vec2i index, const MeshWrapper &mesh, const FastNoise &noise, btCollisionWorld *collision_world) {
+
+}
+
 void GameState::init(Platform *platform, PlatformWindow *window, RenderContext *render_context, Assets *assets, AudioEngine *audio) {
 	DebugRenderQueue::init(render_context, &assets->shaders.editor);
 	timer = 0.0f;
@@ -304,30 +309,6 @@ void GameState::init(Platform *platform, PlatformWindow *window, RenderContext *
 
 
 	createRenderTextures(render_context);
-
-	{
-		u32 terrain_patch_size = 32;
-		StaticMeshVertex *vertices = (StaticMeshVertex *)platform->alloc(sizeof(StaticMeshVertex) * terrain_patch_size * terrain_patch_size);
-		u32 vertex_index = 0;
-		for(u32 y = 0; y < terrain_patch_size; y++) {
-			for(u32 x = 0; x < terrain_patch_size; x++) {
-				StaticMeshVertex vertex = {};
-				vertex.position = Vec3(x, 0.0f, y);
-				vertex.normal = Vec3::up;
-				vertex.color = Vec3(0.2f, 1.0f, 0.2f);
-				vertices[vertex_index++] = vertex;
-			}
-		}
-
-		u16 *indices = (u16 *)platform->alloc(sizeof(u16) * (terrain_patch_size-1) * (terrain_patch_size-1) * 3);
-
-		for(u32 y = 0; y < terrain_patch_size; y++) {
-			for(u32 x = 0; x < terrain_patch_size; x++) {
-				
-			}
-		}
-	}
-
 	
 	btDefaultCollisionConfiguration *collision_config = new btDefaultCollisionConfiguration();
 	btCollisionDispatcher *dispatcher = new btCollisionDispatcher(collision_config);
@@ -347,7 +328,7 @@ void GameState::init(Platform *platform, PlatformWindow *window, RenderContext *
 	btCapsuleShapeZ *player_collider = new btCapsuleShapeZ(1.0f, 0.5f);
 
 	btPairCachingGhostObject *ghost_object = new btPairCachingGhostObject();
-	ghost_object->setWorldTransform(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 10, 0)));
+	ghost_object->setWorldTransform(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 30, 0)));
 	ghost_object->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
 	ghost_object->setCollisionShape(player_collider);
 	
@@ -361,6 +342,62 @@ void GameState::init(Platform *platform, PlatformWindow *window, RenderContext *
 	obs_obj->setCollisionShape(obs_shape);
 	obs_obj->setWorldTransform(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
 	// collision_world->addCollisionObject(obs_obj, btBroadphaseProxy::StaticFilter);
+
+	{
+		FastNoise noise;
+		noise.SetSeed(time(0));
+		const u32 terrain_patch_size = CHUNK_SIZE+1;
+		const u32 vertex_count = terrain_patch_size * terrain_patch_size;
+		Vertex *vertices = (Vertex *)platform->alloc(sizeof(Vertex) * vertex_count);
+		f32 *heightmap = (f32 *)platform->alloc(sizeof(f32) * (terrain_patch_size) * (terrain_patch_size));
+		u32 vertex_index = 0;
+		f32 min_value = 0.0f;
+		f32 max_value = FLT_MIN;
+		for(u32 z = 0; z < terrain_patch_size; z++) {
+			for(u32 x = 0; x < terrain_patch_size; x++) {
+				Vertex vertex = {};
+				f32 y = (noise.GetValue(x, z) * 0.5f + 0.5f) * 20.0f;
+				if(y > max_value)
+					max_value = y;
+
+				heightmap[vertex_index] = y;
+				vertex.position = Vec3(x, y, z);
+				vertex.normal = Vec3::up;
+				vertices[vertex_index++] = vertex;
+			}
+		}
+
+		const u32 index_count = (terrain_patch_size-1) * (terrain_patch_size-1) * 6;
+		u16 *indices = (u16 *)platform->alloc(sizeof(u16) * index_count);
+		u32 index = 0;
+		for(u32 z = 0; z < terrain_patch_size-1; z++) {
+			for(u32 x = 0; x < terrain_patch_size-1; x++) {
+				indices[index++] = z * terrain_patch_size + x;
+				indices[index++] = (z+1) * terrain_patch_size + x;
+				indices[index++] = (z+1) * terrain_patch_size + (x+1);
+
+				indices[index++] = z * terrain_patch_size + x;
+				indices[index++] = (z+1) * terrain_patch_size + (x+1);
+				indices[index++] = z * terrain_patch_size + (x+1);
+			}
+		}
+
+		terrain_mesh = MeshWrapper();
+
+		terrain_mesh.vertex_count = vertex_count;
+		terrain_mesh.vertices = vertices;
+		terrain_mesh.index_count = index_count;
+		terrain_mesh.indices = indices;
+
+		terrain_mesh.vertex_buffer = render_context->createVertexBuffer(vertices, sizeof(Vertex), vertex_count);
+		terrain_mesh.index_buffer = render_context->createVertexBuffer(indices, sizeof(u16), index_count, RenderContext::BufferType::Index);
+
+		btHeightfieldTerrainShape *terrain_shape = new btHeightfieldTerrainShape(terrain_patch_size, terrain_patch_size, heightmap, 1.0f, -max_value, max_value, 1, PHY_FLOAT, false);
+		btCollisionObject *terrain_obj = new btCollisionObject();
+		terrain_obj->setCollisionShape(terrain_shape);
+		terrain_obj->setWorldTransform(btTransform(btQuaternion(0, 0, 0, 1), btVector3((terrain_patch_size-1) * 0.5f, 0.0f, (terrain_patch_size-1)*0.5f)));
+		collision_world->addCollisionObject(terrain_obj, btBroadphaseProxy::StaticFilter);
+	}
 
 	// for(int i = 0; i < assets->static_meshes.count; i++) {
 	// 	StaticMeshData *mesh_data = &assets->static_meshes.meshes[i];
@@ -480,6 +517,14 @@ void GameState::update(InputManager *input, f32 delta, Platform *platform, Platf
 			lights[i].position += world_offset_delta;
 		}
 		char_controller->getGhostObject()->getWorldTransform().setOrigin(v2B(player_pos));
+
+		btCollisionObjectArray &col_objs = collision_world->getCollisionObjectArray();
+		for(s32 i = 0; i < col_objs.size(); i++) {
+			btCollisionObject *obj = col_objs[i];
+			if(obj->isStaticObject()) {
+				obj->getWorldTransform().getOrigin() += v2B(world_offset_delta);
+			}
+		}
 	}
 
 	last_chunk_loc = chunk_loc_index;
@@ -496,9 +541,11 @@ void GameState::renderGeometry(PlatformWindow *window, RenderContext *render_con
 		for(u32 x = 0; x < 30; x++) {
 			Vec3 position = world_offset + Vec3(CHUNK_SIZE * x, -1.0f * x, CHUNK_SIZE * z) + Vec3(CHUNK_SIZE *0.5f, 0.0f, CHUNK_SIZE * 0.5f);
 			Vec4 color = Vec4((f32)x / 3.0f, 0.0f, (f32)z / 3.0f, 1.0f);
-			renderMesh(render_context, &test_cube_mesh, position, Vec3(CHUNK_SIZE * 0.5f, 1.0f, CHUNK_SIZE * 0.5f), color, 1.0f, 0.0f);
+			// renderMesh(render_context, &test_cube_mesh, position, Vec3(CHUNK_SIZE * 0.5f, 1.0f, CHUNK_SIZE * 0.5f), color, 1.0f, 0.0f);
 		}
 	}
+
+	renderMesh(render_context, &terrain_mesh, Vec3() + world_offset, Vec3(1.0f), Vec4(1.0f), 1.0f, 0.0f);
 
 	// renderMesh(render_context, &test_cube_mesh, Vec3(0.0f, 0.0f, 0.0f), Vec3(6.0f, 3.0f, 6.0f), Vec4(0.0f, 1.0f, 0.0f, 1.0f), 1.0f, 0.0f);
 	int sphere_count = 10;
@@ -846,7 +893,7 @@ GAME_RENDER(gameRender) {
 		if(editor->enabled) editor->render(platform, window, render_context, input, assets, delta);
 	)
 
-	// DebugRenderQueue::flushRender(render_context, &assets->shaders.editor, game->camera.getViewProjection());
+	// DebugRenderQueue::	Render(render_context, &assets->shaders.editor, game->camera.getViewProjection());
 	
 	game->camera.endFrame();
 }

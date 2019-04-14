@@ -19,7 +19,7 @@ struct MeshWrapper {
 	u16 *indices;
 	u32 vertex_count;
 	u32 index_count;
-	RenderContext::Topology topology_format = RenderContext::Topology::TriangleList;
+	RenderContext::Topology topology_format;
 	VertexBuffer vertex_buffer;
 	VertexBuffer index_buffer;
 	Mat4 local_matrix;

@@ -66,7 +66,8 @@ float geometrySmith(float3 N, float3 V, float3 L, float roughness) {
     return ggx1 * ggx2;
 }
 
-sampler sampler0;
+sampler clamp_sampler : register(s0);
+sampler wrap_sampler : register(s1);
 Texture2D main_texture : register(t0);
 Texture2D tex_irradiance_map : register(t1);
 Texture2D tex_environment_map : register(t2);
@@ -113,9 +114,9 @@ float4 ps_main(VS_OUTPUT input) : SV_TARGET0 {
 	float3 reflection = reflect(-view, normal);
 
 	float3 base_surface_reflection = float3(0.04f, 0.04f, 0.04f);
-	// float3 base_surface_reflection = tex_environment_map.Sample(sampler0,)
+	// float3 base_surface_reflection = tex_environment_map.Sample(clamp_sampler,)
 	base_surface_reflection = lerp(base_surface_reflection, albedo, metallic);
-	float3 irradiance = tex_irradiance_map.Sample(sampler0, sampleSphericalMap(normal)).rgb;
+	float3 irradiance = tex_irradiance_map.Sample(clamp_sampler, sampleSphericalMap(normal)).rgb;
 	// float3 irradiance = float3(0.03f, 0.03f, 0.03f);
 
 	float3 light_radiance = float3(0.0f, 0.0f, 0.0f);
@@ -148,7 +149,7 @@ float4 ps_main(VS_OUTPUT input) : SV_TARGET0 {
 		light_radiance += (kd * albedo / PI + specular) * radiance * ndotl;
 	}
 
-	// float ao = tex_ao_pass.Sample(sampler0, screen_uv).r;
+	// float ao = tex_ao_pass.Sample(clamp_sampler, screen_uv).r;
 	float ao = 1.0f;
 
 	float3 ks = fresnelSchlick(max(dot(normal, view), 0.0), base_surface_reflection, roughness);

@@ -54,7 +54,7 @@ JointPose AnimationChannel::getPose(f32 t) {
 	}
 
 	JointPose result = poses[0];
-	if(joint_index < 2) return result;
+	// if(joint_index < 2) return result;
 
 	if(first_frame_index != -1 && second_frame_index != -1) {
 		// result =  poses[first_frame_index];

@@ -37,6 +37,7 @@ struct Assets {
 	Texture2D test;
 	Texture2D env_map;
 	Texture2D irr_map;
+	Texture2D debug;
 
 	VoxModel chr_old;
 	ModelWrapper model;

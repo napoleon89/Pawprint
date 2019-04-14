@@ -69,6 +69,8 @@ struct Vec2DTemplate {
 	};
 
 	inline Vec2DTemplate operator-() { return Vec2DTemplate(-x, -y); };
+	bool operator==(const Vec2DTemplate &a) {return x == a.x && y == a.y; } 
+	bool operator!=(const Vec2DTemplate &a) {return x != a.x || y != a.y; } 
 
 	inline Vec2DTemplate operator*(type i) { return Vec2DTemplate(x * i, y * i);    }
 	inline Vec2DTemplate operator/(type i) { return Vec2DTemplate(x / i, y / i);    }

@@ -20,6 +20,7 @@
 #include <engine/debug_renderer.h>
 #include <game/FastNoise.h>
 #include <time.h>
+#include <imgui/imgui.h>
 
 global_variable StackAllocator* g_frame_stack;
 
@@ -40,8 +41,12 @@ struct SkinnedMeshConstants : public PerObjectConstants {
 };
 
 
-Vec3 b2V(btVector3 input) {
+Vec3 b2V(const btVector3 &input) {
 	return Vec3(input.x(), input.y(), input.z());
+}
+
+btVector3 v2B(const Vec3 &input) {
+	return btVector3(input.x, input.y, input.z);
 }
 
 f32 Light::calcLinearTerm() {
@@ -355,7 +360,7 @@ void GameState::init(Platform *platform, PlatformWindow *window, RenderContext *
 	btBoxShape *obs_shape = new btBoxShape(btVector3(6.0f, 3.0f, 6.0f));
 	obs_obj->setCollisionShape(obs_shape);
 	obs_obj->setWorldTransform(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
-	collision_world->addCollisionObject(obs_obj, btBroadphaseProxy::StaticFilter);
+	// collision_world->addCollisionObject(obs_obj, btBroadphaseProxy::StaticFilter);
 
 	// for(int i = 0; i < assets->static_meshes.count; i++) {
 	// 	StaticMeshData *mesh_data = &assets->static_meshes.meshes[i];
@@ -456,17 +461,46 @@ void GameState::update(InputManager *input, f32 delta, Platform *platform, Platf
 	btVector3 linear_velocity = char_controller->getLinearVelocity();
 	// velocity = Vec3(linear_velocity.x(), linear_velocity.y(), linear_velocity.z());
 	//  - camera.forward() * 5.0f
-	camera.position = b2V(char_controller->getGhostObject()->getWorldTransform().getOrigin()) + Vec3(0.0f, 3.0f, 0);
 	// input->setMousePosition(platform, lock_mouse_pos.x, lock_mouse_pos.y);
 	g_anim_timer += delta;
 	char_sequence.progress(delta);
 	g_anim_timer = Math::wrap(g_anim_timer, 0.0f, assets->walking_anim.duration_seconds);
 	assets->skel_dude.skeleton.applyAnimationClip(&assets->walking_anim, g_anim_timer);
+
+	Vec3 player_pos = b2V(char_controller->getGhostObject()->getWorldTransform().getOrigin());
+	Vec3 chunk_loc = Vec3(Math::floorToInt((player_pos.x - world_offset.x) / CHUNK_SIZE), 0.0f, Math::floorToInt((player_pos.z - world_offset.z) / CHUNK_SIZE));
+	Vec2i chunk_loc_index = Vec2i(chunk_loc.x, chunk_loc.z);
+	if(chunk_loc_index != last_chunk_loc) {
+		printf("Crossed chunk boundary\n");
+		Vec3 new_world_offset = -Vec3(CHUNK_SIZE * chunk_loc_index.x, 0.0f, CHUNK_SIZE * chunk_loc_index.y);
+		Vec3 world_offset_delta = new_world_offset - world_offset;
+		world_offset = new_world_offset;
+		player_pos += world_offset_delta;
+		for(u32 i = 0; i < 4; i++) {
+			lights[i].position += world_offset_delta;
+		}
+		char_controller->getGhostObject()->getWorldTransform().setOrigin(v2B(player_pos));
+	}
+
+	last_chunk_loc = chunk_loc_index;
+
+	ImGui::Text("%.3f, %.3f, %.3f", player_pos.x, player_pos.y, player_pos.z);
+
+	camera.position = b2V(char_controller->getGhostObject()->getWorldTransform().getOrigin()) + Vec3(0.0f, 3.0f, 0);
 }
 
 void GameState::renderGeometry(PlatformWindow *window, RenderContext *render_context, InputManager *input, Assets *assets, Platform *platform,  f32 delta, bool can_override_shader) {
-	renderMesh(render_context, &test_cube_mesh, Vec3(0.0f, -1.0f, 0.0f), Vec3(40.0f, 1.0f, 40.0f), Vec4(0.0f, 1.0f, 0.0f, 1.0f), 1.0f, 0.0f);
-	renderMesh(render_context, &test_cube_mesh, Vec3(0.0f, 0.0f, 0.0f), Vec3(6.0f, 3.0f, 6.0f), Vec4(1.0f, 0.0f, 0.0f, 1.0f), 1.0f, 0.0f);
+
+	render_context->bindTexture2D(&assets->debug, 0);
+	for(u32 z = 0; z < 30; z++) {
+		for(u32 x = 0; x < 30; x++) {
+			Vec3 position = world_offset + Vec3(CHUNK_SIZE * x, -1.0f * x, CHUNK_SIZE * z) + Vec3(CHUNK_SIZE *0.5f, 0.0f, CHUNK_SIZE * 0.5f);
+			Vec4 color = Vec4((f32)x / 3.0f, 0.0f, (f32)z / 3.0f, 1.0f);
+			renderMesh(render_context, &test_cube_mesh, position, Vec3(CHUNK_SIZE * 0.5f, 1.0f, CHUNK_SIZE * 0.5f), color, 1.0f, 0.0f);
+		}
+	}
+
+	// renderMesh(render_context, &test_cube_mesh, Vec3(0.0f, 0.0f, 0.0f), Vec3(6.0f, 3.0f, 6.0f), Vec4(0.0f, 1.0f, 0.0f, 1.0f), 1.0f, 0.0f);
 	int sphere_count = 10;
 	for(int y = 0; y < sphere_count; y++) {
 		float metallic = y * (1.0f / (f32)sphere_count);
@@ -812,7 +846,7 @@ GAME_RENDER(gameRender) {
 		if(editor->enabled) editor->render(platform, window, render_context, input, assets, delta);
 	)
 
-	DebugRenderQueue::flushRender(render_context, &assets->shaders.editor, game->camera.getViewProjection());
+	// DebugRenderQueue::flushRender(render_context, &assets->shaders.editor, game->camera.getViewProjection());
 	
 	game->camera.endFrame();
 }

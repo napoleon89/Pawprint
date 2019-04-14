@@ -85,6 +85,7 @@ struct PositionNormalPrePass {
 	void clear(RenderContext *render_context, Vec4 color);
 };
 
+#define CHUNK_SIZE 32
 
 struct GameState {
 	f32 timer;
@@ -138,6 +139,8 @@ struct GameState {
 	Vec3 velocity;
 	AnimationSequence char_sequence;
 	Vec3 npc_position;
+	Vec3 world_offset;
+	Vec2i last_chunk_loc;
 	
 	void init(Platform *platform, PlatformWindow *window, RenderContext *render_context, Assets *assets, AudioEngine *audio);
 	void onResize(InputManager *input, f32 delta, Platform *platform, PlatformWindow *window, Assets *assets, RenderContext *render_context);

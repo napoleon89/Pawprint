@@ -142,9 +142,6 @@ void DebugRenderQueue::flushRender(RenderContext *render_context, Shader *debug_
 			Vec3 local_up = Vec3::normalize(Vec3::cross(world_right, dir));
 			
 			per_object.model = Mat4::translate(handle.start) * Mat4::basisChange(world_right, local_up, dir) * Mat4::scale(Vec3(handle.thickness, handle.thickness, Vec3::length(handle.end - handle.start)));
-			// Mat4 model = Mat4::transpose(Mat4::basis(world_right, local_up, dir));
-			// model = Mat4::translate(handle.start) * model;
-			// per_object.model = model;
 			render_context->updateShaderConstant(&g_per_object_constant, &per_object);
 			render_context->sendDrawIndexed(RenderContext::Topology::TriangleList, index_count, 0, 0);
 		}

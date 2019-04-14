@@ -209,6 +209,7 @@ int main(int arg_count, char *args[]) {
 	game_assets->test = loadTexture(test_image_data, 3, &render_context);
 	game_assets->env_map = loadTextureFromFile(&platform, "skyboxes/apt", &render_context, "hdr", RenderContext::Format::Vec4, 4);
 	game_assets->irr_map = loadTextureFromFile(&platform, "skyboxes/apt_ibl", &render_context, "hdr", RenderContext::Format::Vec4, 4);
+	game_assets->debug = loadTextureFromFile(&platform, "debug", &render_context, "png", RenderContext::Format::Vec4, 4);
 	
 	ImGui::CreateContext();
 	ImGuiImpl::init(&platform, &window, &game_assets->shaders.imgui);

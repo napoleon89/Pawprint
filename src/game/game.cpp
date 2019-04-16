@@ -464,6 +464,7 @@ void GameState::onResize(InputManager *input, f32 delta, Platform *platform, Pla
 global_variable f32 g_anim_timer = 0.0f;
 
 void GameState::update(InputManager *input, f32 delta, Platform *platform, PlatformWindow *window, Assets *assets, RenderContext *render_context) {
+	DebugRenderQueue::startframe();
 	timer += delta;
 	camera.beginFrame(platform, window);
 	// Vec2i lock_mouse_pos = Vec2i(camera.window_dimensions.x / 2, camera.window_dimensions.y / 2);

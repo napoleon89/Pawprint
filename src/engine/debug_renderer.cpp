@@ -57,6 +57,11 @@ void DebugRenderQueue::addAABB(const Vec3 &min, const Vec3 &max, const Vec4 &col
 	g_debug_aabbs.push_back(aabb);
 }
 
+void DebugRenderQueue::startframe() {
+	g_debug_lines.clear();
+	g_debug_aabbs.clear();
+}
+
 void DebugRenderQueue::flushRender(RenderContext *render_context, Shader *debug_shader, const Mat4 &view_projection) {
 
 	for(size_t i = 0; i < g_debug_aabbs.size(); i++) {
@@ -150,7 +155,4 @@ void DebugRenderQueue::flushRender(RenderContext *render_context, Shader *debug_
 		render_context->destroyVertexBuffer(&vb);
 		render_context->destroyVertexBuffer(&ib);
 	}
-
-	g_debug_lines.clear();
-	g_debug_aabbs.clear();
 }

@@ -29,6 +29,12 @@ bool Globals::show_colliders = false;
 bool Globals::anim_finished = false;
 bool Globals::wireframe = false;
 
+struct Chunk {
+	static const u32 TERRAIN_PATCH_SIZE = CHUNK_SIZE+1;
+	Vertex vertices[TERRAIN_PATCH_SIZE * TERRAIN_PATCH_SIZE];
+	f32 heightmap[TERRAIN_PATCH_SIZE * TERRAIN_PATCH_SIZE];
+};
+
 struct PerObjectConstants {
 	Mat4 model;
 	Vec4 color;
@@ -176,6 +182,60 @@ internal_func void generateMap() {
 
 internal_func void generateChunk(Vec2i index, const MeshWrapper &mesh, const FastNoise &noise, btCollisionWorld *collision_world) {
 
+}
+
+static void generateChunk(const Vec2i &chunk_index, MeshWrapper &mesh, btCollisionWorld *collision_world, FastNoise &noise, Platform *platform, RenderContext *render_context) {
+	const u32 terrain_patch_size = CHUNK_SIZE+1;
+	const u32 vertex_count = terrain_patch_size * terrain_patch_size;
+	Vertex *vertices = (Vertex *)platform->alloc(sizeof(Vertex) * vertex_count);
+	f32 *heightmap = (f32 *)platform->alloc(sizeof(f32) * (terrain_patch_size) * (terrain_patch_size));
+	u32 vertex_index = 0;
+	f32 min_value = 0.0f;
+	f32 max_value = FLT_MIN;
+	for(u32 z = 0; z < terrain_patch_size; z++) {
+		for(u32 x = 0; x < terrain_patch_size; x++) {
+			Vertex vertex = {};
+			f32 y = (noise.GetValue(x, z) * 0.5f + 0.5f) * 20.0f;
+			if(y > max_value)
+				max_value = y;
+
+			heightmap[vertex_index] = y;
+			vertex.position = Vec3(x, y, z);
+			vertex.normal = Vec3::up;
+			vertices[vertex_index++] = vertex;
+		}
+	}
+
+	const u32 index_count = (terrain_patch_size-1) * (terrain_patch_size-1) * 6;
+	u16 *indices = (u16 *)platform->alloc(sizeof(u16) * index_count);
+	u32 index = 0;
+	for(u32 z = 0; z < terrain_patch_size-1; z++) {
+		for(u32 x = 0; x < terrain_patch_size-1; x++) {
+			indices[index++] = z * terrain_patch_size + x;
+			indices[index++] = (z+1) * terrain_patch_size + x;
+			indices[index++] = (z+1) * terrain_patch_size + (x+1);
+
+			indices[index++] = z * terrain_patch_size + x;
+			indices[index++] = (z+1) * terrain_patch_size + (x+1);
+			indices[index++] = z * terrain_patch_size + (x+1);
+		}
+	}
+
+	mesh = MeshWrapper();
+
+	mesh.vertex_count = vertex_count;
+	mesh.vertices = vertices;
+	mesh.index_count = index_count;
+	mesh.indices = indices;
+
+	mesh.vertex_buffer = render_context->createVertexBuffer(vertices, sizeof(Vertex), vertex_count);
+	mesh.index_buffer = render_context->createVertexBuffer(indices, sizeof(u16), index_count, RenderContext::BufferType::Index);
+
+	btHeightfieldTerrainShape *terrain_shape = new btHeightfieldTerrainShape(terrain_patch_size, terrain_patch_size, heightmap, 1.0f, -max_value, max_value, 1, PHY_FLOAT, false);
+	btCollisionObject *terrain_obj = new btCollisionObject();
+	terrain_obj->setCollisionShape(terrain_shape);
+	terrain_obj->setWorldTransform(btTransform(btQuaternion(0, 0, 0, 1), btVector3((terrain_patch_size-1) * 0.5f, 0.0f, (terrain_patch_size-1)*0.5f)));
+	collision_world->addCollisionObject(terrain_obj, btBroadphaseProxy::StaticFilter);
 }
 
 void GameState::init(Platform *platform, PlatformWindow *window, RenderContext *render_context, Assets *assets, AudioEngine *audio) {
